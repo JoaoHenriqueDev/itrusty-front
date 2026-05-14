@@ -1,6 +1,7 @@
 import { Tabs } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
-import { Colors, Typography } from '../../constants/theme'
+import { Colors, Typography, Shadows } from '../../constants/theme'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 type IconName = keyof typeof Ionicons.glyphMap
 
@@ -12,6 +13,8 @@ const TABS: { name: string; title: string; icon: IconName; iconActive: IconName 
 ]
 
 export default function OficinaLayout() {
+  const insets = useSafeAreaInsets()
+
   return (
     <Tabs
       screenOptions={{
@@ -19,12 +22,16 @@ export default function OficinaLayout() {
         tabBarActiveTintColor:   Colors.accent,
         tabBarInactiveTintColor: Colors.textMuted,
         tabBarStyle: {
-          backgroundColor: Colors.surface,
-          borderTopColor:  Colors.border,
-          borderTopWidth:  1,
-          paddingBottom:   8,
-          paddingTop:      8,
-          height:          64,
+          position:         'absolute',
+          bottom:           insets.bottom + 10,
+          marginHorizontal: 16,
+          borderRadius:     24,
+          backgroundColor:  Colors.surface,
+          borderTopWidth:   0,
+          height:           64,
+          paddingTop:       8,
+          paddingBottom:    8,
+          ...Shadows.md,
         },
         tabBarLabelStyle: {
           fontSize:   Typography.size.xs,
