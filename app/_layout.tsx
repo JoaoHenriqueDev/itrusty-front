@@ -6,7 +6,7 @@ import { usePushNotifications } from '../hooks/usePushNotifications'
 import { AppAlertProvider } from '../components/ui/AppAlert'
 
 function RootLayoutNav() {
-  const { token, user, loading, introCompleto } = useAuth()
+  const { token, user, loading } = useAuth()
   const router = useRouter()
   const segments = useSegments()
   const navigationState = useRootNavigationState()
@@ -20,12 +20,6 @@ function RootLayoutNav() {
 
   useEffect(() => {
     if (!navigationState?.key || loading) return
-
-    const inIntro         = segments[0] === 'intro'
-    if (!introCompleto) {
-      if (!inIntro) router.replace('/intro')
-      return
-    }
 
     const inAuth          = segments[0] === '(auth)'
     const inOnboarding    = segments[0] === '(onboarding)'
@@ -52,7 +46,7 @@ function RootLayoutNav() {
       router.replace('/(oficina)/')
       return
     }
-  }, [token, user, loading, navigationState?.key, introCompleto])
+  }, [token, user, loading, navigationState?.key])
 
   if (loading || !navigationState?.key) return <SplashScreen />
 
