@@ -5,6 +5,7 @@ import {
 } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useLocalSearchParams, useRouter } from 'expo-router'
+import { useHideTabBar } from '../../../hooks/useHideTabBar'
 import { Ionicons } from '@expo/vector-icons'
 import { api } from '../../../services/api'
 import { Colors, Spacing, Typography, Radii, Shadows } from '../../../constants/theme'
@@ -38,6 +39,7 @@ function formatarDuracao(min: number) {
 }
 
 export default function DetalheAgendamento() {
+  useHideTabBar()
   const { id } = useLocalSearchParams<{ id: string }>()
   const router = useRouter()
   const insets = useSafeAreaInsets()

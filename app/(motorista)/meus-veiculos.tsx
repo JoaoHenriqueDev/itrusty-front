@@ -4,6 +4,7 @@ import {
   TextInput, ActivityIndicator,
 } from 'react-native'
 import { useFocusEffect, useRouter } from 'expo-router'
+import { useHideTabBar } from '../../hooks/useHideTabBar'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { api } from '../../services/api'
@@ -15,6 +16,7 @@ type Veiculo = { id: string; marca: string; modelo: string; ano: number; placa: 
 const ANO_ATUAL = new Date().getFullYear()
 
 export default function MeusVeiculos() {
+  useHideTabBar()
   const router = useRouter()
   const insets = useSafeAreaInsets()
   const { alert, confirm } = useAppAlert()

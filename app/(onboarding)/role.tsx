@@ -16,7 +16,7 @@ const OPCOES: { role: Role; titulo: string; descricao: string; icone: keyof type
   },
   {
     role:      'OFICINA',
-    titulo:    'Tenho uma oficina',
+    titulo:    'Sou uma empresa',
     descricao: 'Quero gerenciar minha agenda e atender mais clientes.',
     icone:     'construct-outline',
   },
@@ -38,7 +38,7 @@ export default function Role() {
 
       <Text style={s.titulo}>
         Você é{'\n'}motorista ou{'\n'}
-        <Text style={s.destaque}>oficina</Text>?
+        <Text style={s.destaque}>empresa</Text>?
       </Text>
       <Text style={s.subtitulo}>Personalizamos o app pra você.</Text>
 

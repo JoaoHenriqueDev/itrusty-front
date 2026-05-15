@@ -13,9 +13,11 @@ type AuthContextType = {
   token: string | null
   user: User | null
   loading: boolean
+  introCompleto: boolean
   signIn: (accessToken: string, user: User, refreshToken: string) => Promise<void>
   signOut: () => Promise<void>
   updateUser: (user: User) => void
+  marcarIntroCompleto: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType>({} as AuthContextType)
@@ -25,7 +27,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     token: null,
     user: null,
   })
-  const [loading, setLoading] = useState(true)
+  const [loading,       setLoading]       = useState(true)
+  const [introCompleto, setIntroCompleto] = useState(false)
   const isSigningInRef = useRef(false)
 
   async function signIn(accessToken: string, newUser: User, refreshToken: string) {
@@ -59,6 +62,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setAuth({ token: null, user: null })
   }
 
+  async function marcarIntroCompleto() {
+    await saveSecure('onboarding_completed', 'true')
+    setIntroCompleto(true)
+  }
+
   function updateUser(updatedUser: User) {
     setAuth(prev => ({ ...prev, user: updatedUser }))
     saveSecure('user', JSON.stringify(updatedUser))
@@ -70,10 +78,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     async function carregarSessao() {
-      const [savedToken, savedUser] = await Promise.all([
+      const [savedToken, savedUser, introOk] = await Promise.all([
         getSecure('token'),
         getSecure('user'),
+        getSecure('onboarding_completed'),
       ])
+      setIntroCompleto(introOk === 'true')
       if (savedToken && savedUser) {
         try {
           setAuth({ token: savedToken, user: JSON.parse(savedUser) })
@@ -109,7 +119,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   return (
-    <AuthContext.Provider value={{ token: auth.token, user: auth.user, loading, signIn, signOut, updateUser }}>
+    <AuthContext.Provider value={{ token: auth.token, user: auth.user, loading, introCompleto, signIn, signOut, updateUser, marcarIntroCompleto }}>
       {children}
     </AuthContext.Provider>
   )

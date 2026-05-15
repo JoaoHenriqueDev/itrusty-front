@@ -268,7 +268,7 @@ export default function Agendamentos() {
 const s = StyleSheet.create({
   container:       { flex: 1, backgroundColor: Colors.background },
   titulo:          { fontSize: Typography.size['2xl'], fontWeight: Typography.weight.extrabold, color: Colors.primary, paddingHorizontal: Spacing.lg, marginBottom: Spacing.base },
-  lista:           { paddingHorizontal: Spacing.lg, paddingBottom: Spacing.xxl },
+  lista:           { paddingHorizontal: Spacing.lg, paddingBottom: 96 },
   card:            { backgroundColor: Colors.surface, borderRadius: Radii.lg, borderWidth: 1, borderColor: Colors.border, marginBottom: Spacing.base, overflow: 'hidden', ...Shadows.sm },
   cardHeader:      { flexDirection: 'row', alignItems: 'center', padding: Spacing.base, gap: Spacing.md },
   foto:            { width: 44, height: 44, borderRadius: Radii.md, backgroundColor: Colors.primary, justifyContent: 'center', alignItems: 'center', overflow: 'hidden' },

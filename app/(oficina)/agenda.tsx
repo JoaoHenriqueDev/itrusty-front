@@ -170,7 +170,7 @@ const s = StyleSheet.create({
   diaTextoSel:  { color: Colors.surface },
   dotHoje:      { width: 5, height: 5, borderRadius: 3, backgroundColor: Colors.accent },
   labelDia:     { fontSize: Typography.size.xs, color: Colors.textMuted, letterSpacing: 0.8, marginHorizontal: Spacing.lg, marginTop: Spacing.md, marginBottom: Spacing.sm },
-  lista:        { paddingHorizontal: Spacing.lg, paddingBottom: Spacing.xxl },
+  lista:        { paddingHorizontal: Spacing.lg, paddingBottom: 96 },
   card:         { flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.surface, borderRadius: Radii.md, padding: Spacing.base, marginBottom: Spacing.sm, borderWidth: 1, borderColor: Colors.border, gap: Spacing.md },
   hora:         { fontSize: Typography.size.sm, fontWeight: Typography.weight.bold, color: Colors.primary, width: 44 },
   nome:         { fontSize: Typography.size.md, fontWeight: Typography.weight.bold, color: Colors.primary },

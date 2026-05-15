@@ -6,7 +6,7 @@ import {
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
-import MapView, { Marker, PROVIDER_DEFAULT } from 'react-native-maps'
+import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps'
 import { api } from '../../../services/api'
 import { Colors, Spacing, Typography, Radii, Shadows } from '../../../constants/theme'
 import { StarRating } from '../../../components/ui/StarRating'
@@ -175,7 +175,7 @@ export default function DetalheOficina() {
               <MapView
                 key={`map-${oficina.latitude}-${oficina.longitude}`}
                 style={s.mapa}
-                provider={PROVIDER_DEFAULT}
+                provider={PROVIDER_GOOGLE}
                 region={{
                   latitude:       oficina.latitude!,
                   longitude:      oficina.longitude!,

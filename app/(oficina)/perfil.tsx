@@ -203,7 +203,7 @@ export default function PerfilOficina() {
 
 const s = StyleSheet.create({
   container:      { flex: 1, backgroundColor: Colors.background },
-  scroll:         { paddingHorizontal: Spacing.lg, paddingBottom: Spacing['3xl'] },
+  scroll:         { paddingHorizontal: Spacing.lg, paddingBottom: 96 },
 
   // Profile card
   profileCard:    { backgroundColor: Colors.surface, borderRadius: Radii.lg, borderWidth: 1, borderColor: Colors.border, overflow: 'hidden', marginBottom: Spacing.xl, marginTop: Spacing.sm, ...Shadows.sm },

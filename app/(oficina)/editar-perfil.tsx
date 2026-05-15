@@ -10,10 +10,12 @@ import { api } from '../../services/api'
 import { useAuth } from '../../contexts/AuthContext'
 import { Colors, Spacing, Typography, Radii } from '../../constants/theme'
 import { useAppAlert } from '../../components/ui/AppAlert'
+import { useHideTabBar } from '../../hooks/useHideTabBar'
 
 type PerfilData = { id: string; name: string; email: string; phone: string | null; role: string | null }
 
 export default function EditarPerfilOficina() {
+  useHideTabBar()
   const router  = useRouter()
   const insets  = useSafeAreaInsets()
   const { user, updateUser } = useAuth()

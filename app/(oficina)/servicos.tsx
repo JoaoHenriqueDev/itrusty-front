@@ -153,7 +153,7 @@ const s = StyleSheet.create({
   subtitulo:       { fontSize: Typography.size.xs, color: Colors.textMuted, letterSpacing: 0.8, marginTop: Spacing.xs },
   addBtn:          { width: 44, height: 44, borderRadius: Radii.md, backgroundColor: Colors.accent, justifyContent: 'center', alignItems: 'center', ...Shadows.sm },
   skeletonContainer:{ paddingHorizontal: Spacing.lg },
-  lista:           { paddingHorizontal: Spacing.lg, paddingBottom: Spacing.xxl },
+  lista:           { paddingHorizontal: Spacing.lg, paddingBottom: 96 },
   card:            { flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.surface, borderRadius: Radii.md, paddingRight: Spacing.base, marginBottom: Spacing.sm, borderWidth: 1, borderColor: Colors.border },
   cardInativo:     { opacity: 0.65 },
   cardInfo:        { flex: 1, padding: Spacing.base },

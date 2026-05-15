@@ -18,12 +18,22 @@ export default function MotoristaLayout() {
         tabBarActiveTintColor:   Colors.accent,
         tabBarInactiveTintColor: Colors.textMuted,
         tabBarStyle: {
+          position:        'absolute',
+          bottom:          28,
+          left:            0,
+          right:           0,
+          marginHorizontal: 40,
           backgroundColor: Colors.surface,
-          borderTopColor:  Colors.border,
-          borderTopWidth:  1,
+          borderRadius:    28,
+          borderTopWidth:  0,
           paddingBottom:   8,
           paddingTop:      8,
           height:          64,
+          elevation:       8,
+          shadowColor:     '#000',
+          shadowOffset:    { width: 0, height: 4 },
+          shadowOpacity:   0.12,
+          shadowRadius:    16,
         },
         tabBarLabelStyle: {
           fontSize:   Typography.size.xs,
@@ -44,13 +54,13 @@ export default function MotoristaLayout() {
         />
       ))}
 
-      {/* Telas de detalhe — sem tab */}
-      <Tabs.Screen name="oficina/[id]"      options={{ href: null }} />
-      <Tabs.Screen name="oficina-externa"   options={{ href: null }} />
-      <Tabs.Screen name="agendar/[id]"   options={{ href: null }} />
-      <Tabs.Screen name="notificacoes"   options={{ href: null }} />
-      <Tabs.Screen name="editar-perfil"  options={{ href: null }} />
-      <Tabs.Screen name="meus-veiculos"  options={{ href: null }} />
+      {/* Telas de detalhe — sem tab, sem navbar */}
+      <Tabs.Screen name="oficina/[id]"    options={{ href: null, tabBarStyle: { display: 'none' } }} />
+      <Tabs.Screen name="oficina-externa" options={{ href: null, tabBarStyle: { display: 'none' } }} />
+      <Tabs.Screen name="agendar/[id]"    options={{ href: null, tabBarStyle: { display: 'none' } }} />
+      <Tabs.Screen name="notificacoes"    options={{ href: null, tabBarStyle: { display: 'none' } }} />
+      <Tabs.Screen name="editar-perfil"   options={{ href: null, tabBarStyle: { display: 'none' } }} />
+      <Tabs.Screen name="meus-veiculos"   options={{ href: null, tabBarStyle: { display: 'none' } }} />
     </Tabs>
   )
 }

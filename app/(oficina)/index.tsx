@@ -226,7 +226,7 @@ export default function HomeOficina() {
 
 const s = StyleSheet.create({
   container:         { flex: 1, backgroundColor: Colors.background },
-  scroll:            { paddingHorizontal: Spacing.lg, paddingBottom: Spacing.xxl },
+  scroll:            { paddingHorizontal: Spacing.lg, paddingBottom: 96 },
   titulo:            { fontSize: Typography.size['3xl'], fontWeight: Typography.weight.extrabold, color: Colors.primary, marginBottom: Spacing.base, marginTop: Spacing.sm },
 
   metricas:          { flexDirection: 'row', gap: Spacing.sm, marginBottom: Spacing.xl },

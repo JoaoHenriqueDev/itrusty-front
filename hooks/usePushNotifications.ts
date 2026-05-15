@@ -1,7 +1,6 @@
 import { useEffect, useRef } from 'react'
 import * as Notifications from 'expo-notifications'
 import * as Device from 'expo-device'
-import Constants from 'expo-constants'
 import { Platform, AppState, AppStateStatus } from 'react-native'
 import { api } from '../services/api'
 import { getSecure, saveSecure } from '../utils/storage'
@@ -15,42 +14,39 @@ Notifications.setNotificationHandler({
   }),
 })
 
-async function registrarToken(_jwtToken: string) {
+async function registrarToken() {
   if (!Device.isDevice) return
 
-  if (Platform.OS === 'android') {
-    await Notifications.setNotificationChannelAsync('default', {
-      name:             'iTrusty',
-      importance:       Notifications.AndroidImportance.MAX,
-      vibrationPattern: [0, 250, 250, 250],
-      lightColor:       '#F97316',
-      sound:            'default',
-    })
-  }
-
-  const { status: statusAtual } = await Notifications.getPermissionsAsync()
-  let statusFinal = statusAtual
-
-  if (statusAtual !== 'granted') {
-    const { status } = await Notifications.requestPermissionsAsync()
-    statusFinal = status
-  }
-
-  if (statusFinal !== 'granted') return
-
-  const projectId = Constants.expoConfig?.extra?.eas?.projectId as string | undefined
-  if (!projectId) return
-
   try {
-    const { data: novoToken } = await Notifications.getExpoPushTokenAsync({ projectId })
+    if (Platform.OS === 'android') {
+      await Notifications.setNotificationChannelAsync('default', {
+        name:             'iTrusty',
+        importance:       Notifications.AndroidImportance.MAX,
+        vibrationPattern: [0, 250, 250, 250],
+        lightColor:       '#F97316',
+        sound:            'default',
+      })
+    }
+
+    const { status: statusAtual } = await Notifications.getPermissionsAsync()
+    let statusFinal = statusAtual
+
+    if (statusAtual !== 'granted') {
+      const { status } = await Notifications.requestPermissionsAsync()
+      statusFinal = status
+    }
+
+    if (statusFinal !== 'granted') return
+
+    const { data: novoToken } = await Notifications.getDevicePushTokenAsync()
 
     const tokenSalvo = await getSecure('pushToken')
     if (novoToken === tokenSalvo) return
 
     await api.patch('/usuario/push-token', { token: novoToken })
     await saveSecure('pushToken', novoToken)
-  } catch {
-    // falha silenciosa — próxima abertura do app tentará novamente
+  } catch (err) {
+    console.error('[Push] Erro ao registrar token:', err)
   }
 }
 
@@ -65,16 +61,14 @@ export function usePushNotifications(onTap?: () => void) {
     onTapRef.current = onTap
   }, [onTap])
 
-  // Registra ao fazer login (jwtToken muda de null → valor)
   useEffect(() => {
-    if (jwtToken) registrarToken(jwtToken)
+    if (jwtToken) registrarToken()
   }, [jwtToken])
 
-  // Re-registra quando o app volta ao foreground — recupera token perdido no backend
   useEffect(() => {
     if (!jwtToken) return
     const sub = AppState.addEventListener('change', (state: AppStateStatus) => {
-      if (state === 'active') registrarToken(jwtToken)
+      if (state === 'active') registrarToken()
     })
     return () => sub.remove()
   }, [jwtToken])

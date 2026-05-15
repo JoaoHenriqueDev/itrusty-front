@@ -2,7 +2,7 @@ import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Linking, Platform
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
-import MapView, { Marker, PROVIDER_DEFAULT } from 'react-native-maps'
+import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps'
 import { Colors, Spacing, Typography, Radii, Shadows } from '../../constants/theme'
 
 export default function OficinaExterna() {
@@ -82,7 +82,7 @@ export default function OficinaExterna() {
             <View style={s.mapaContainer}>
               <MapView
                 style={s.mapa}
-                provider={PROVIDER_DEFAULT}
+                provider={PROVIDER_GOOGLE}
                 region={{ latitude: latitude!, longitude: longitude!, latitudeDelta: 0.008, longitudeDelta: 0.008 }}
                 scrollEnabled={false}
                 zoomEnabled={false}

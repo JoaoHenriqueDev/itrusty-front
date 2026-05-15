@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react'
 import { useFocusEffect, useRouter } from 'expo-router'
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native'
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Image } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { useAuth } from '../../contexts/AuthContext'
@@ -11,6 +11,8 @@ import { Colors, Spacing, Typography, Radii, Shadows } from '../../constants/the
 type MotoristaData = {
   veiculos: { id: string; marca: string; modelo: string; ano: number; placa: string }[]
 }
+
+type PerfilData = { fotoUrl: string | null }
 
 interface MenuItemProps {
   icone:   keyof typeof Ionicons.glyphMap
@@ -50,10 +52,14 @@ export default function PerfilMotorista() {
   const insets  = useSafeAreaInsets()
   const { naoLidas } = useNotificacoes()
   const [veiculos, setVeiculos] = useState<MotoristaData['veiculos']>([])
+  const [fotoUrl,  setFotoUrl]  = useState<string | null>(null)
 
   useFocusEffect(useCallback(() => {
     api.get<{ veiculos: MotoristaData['veiculos'] }>('/motorista/veiculos')
       .then(res => setVeiculos(res.veiculos ?? []))
+      .catch(() => {})
+    api.get<PerfilData>('/usuario/perfil')
+      .then(res => setFotoUrl(res.fotoUrl ?? null))
       .catch(() => {})
   }, []))
 
@@ -69,9 +75,14 @@ export default function PerfilMotorista() {
         {/* ── Card do motorista ── */}
         <View style={s.profileCard}>
           <View style={s.avatarWrap}>
-            <View style={s.avatar}>
-              <Text style={s.avatarLetra}>{inicial}</Text>
-            </View>
+            {fotoUrl
+              ? <Image source={{ uri: fotoUrl }} style={s.avatarFoto} />
+              : (
+                <View style={s.avatar}>
+                  <Text style={s.avatarLetra}>{inicial}</Text>
+                </View>
+              )
+            }
             <View style={s.profileInfo}>
               <Text style={s.profileNome} numberOfLines={1}>{user?.name}</Text>
               <Text style={s.profileTipo}>Motorista</Text>
@@ -164,10 +175,11 @@ export default function PerfilMotorista() {
 
 const s = StyleSheet.create({
   container:      { flex: 1, backgroundColor: Colors.background },
-  scroll:         { paddingHorizontal: Spacing.lg, paddingBottom: Spacing['3xl'] },
+  scroll:         { paddingHorizontal: Spacing.lg, paddingBottom: 96 },
   profileCard:    { backgroundColor: Colors.surface, borderRadius: Radii.lg, borderWidth: 1, borderColor: Colors.border, padding: Spacing.base, marginBottom: Spacing.xl, ...Shadows.sm },
   avatarWrap:     { flexDirection: 'row', alignItems: 'center', gap: Spacing.base },
   avatar:         { width: 56, height: 56, borderRadius: 28, backgroundColor: Colors.accent, justifyContent: 'center', alignItems: 'center', flexShrink: 0 },
+  avatarFoto:     { width: 56, height: 56, borderRadius: 28, flexShrink: 0 },
   avatarLetra:    { fontSize: Typography.size.xl, fontWeight: Typography.weight.extrabold, color: Colors.surface },
   profileInfo:    { flex: 1, gap: 3 },
   profileNome:    { fontSize: Typography.size.lg, fontWeight: Typography.weight.extrabold, color: Colors.text },

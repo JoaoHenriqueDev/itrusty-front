@@ -5,6 +5,7 @@ import {
 } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useLocalSearchParams, useRouter } from 'expo-router'
+import { useHideTabBar } from '../../../hooks/useHideTabBar'
 import { Ionicons } from '@expo/vector-icons'
 import { useAuth } from '../../../contexts/AuthContext'
 import { api } from '../../../services/api'
@@ -23,6 +24,7 @@ type Servico = {
 }
 
 export default function EditarServico() {
+  useHideTabBar()
   const { id }    = useLocalSearchParams<{ id: string }>()
   const router    = useRouter()
   const { user }  = useAuth()

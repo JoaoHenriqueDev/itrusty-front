@@ -4,6 +4,7 @@ import {
   ActivityIndicator, TextInput,
 } from 'react-native'
 import { useLocalSearchParams, useRouter } from 'expo-router'
+import { useHideTabBar } from '../../../hooks/useHideTabBar'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { api } from '../../../services/api'
@@ -65,6 +66,7 @@ const DATAS = gerarDatas()
 const SLOTS = gerarSlots()
 
 export default function Agendar() {
+  useHideTabBar()
   const { id: oficinaId, servicoId: servicoIdParam } = useLocalSearchParams<{ id: string; servicoId?: string }>()
   const router  = useRouter()
   const insets  = useSafeAreaInsets()

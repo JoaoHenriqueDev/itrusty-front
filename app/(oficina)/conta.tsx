@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import {
   View, Text, TextInput, ScrollView, TouchableOpacity,
   StyleSheet, Switch, ActivityIndicator, Image, Platform,
+  Modal, FlatList, Pressable,
 } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
@@ -33,6 +34,90 @@ const GRUPOS_INICIAIS: GrupoDia[] = [
 
 const BUCKET = 'oficina-fotos'
 
+// ─── Multi-select dropdown ────────────────────────────────────────────────────
+
+const CATEGORIA_LABELS: Record<string, string> = {
+  MECANICA_GERAL: 'Mecânica Geral', TROCA_OLEO: 'Troca de Óleo',
+  DIAGNOSTICO: 'Diagnóstico', FREIOS: 'Freios', SUSPENSAO: 'Suspensão',
+  ELETRICA: 'Elétrica', BORRACHARIA: 'Borracharia', ESTETICA: 'Estética Automotiva',
+  DETAILING: 'Detailing', FUNILARIA: 'Funilaria', PINTURA: 'Pintura',
+  MARTELINHO: 'Martelinho de Ouro', AR_CONDICIONADO: 'Ar-condicionado',
+  VIDROS: 'Vidros', PERFORMANCE: 'Performance', CUSTOMIZACAO: 'Customização',
+  HIBRIDOS: 'Híbridos', ELETRICOS: 'Elétricos',
+}
+const CATEGORIAS_LIST = Object.keys(CATEGORIA_LABELS)
+
+const PAGAMENTO_LABELS: Record<string, string> = {
+  PIX: 'Pix', DINHEIRO: 'Dinheiro', CARTAO_CREDITO: 'Cartão de Crédito',
+  CARTAO_DEBITO: 'Cartão de Débito', TRANSFERENCIA: 'Transferência Bancária',
+  BOLETO: 'Boleto', PARCELADO: 'Parcelado', CHEQUE: 'Cheque',
+}
+const PAGAMENTOS_LIST = Object.keys(PAGAMENTO_LABELS)
+
+type DropdownProps = {
+  itens: string[]
+  labels: Record<string, string>
+  selecionados: string[]
+  onChange: (v: string[]) => void
+  placeholder: string
+  titulo: string
+}
+
+function MultiDropdown({ itens, labels, selecionados, onChange, placeholder, titulo }: DropdownProps) {
+  const [aberto, setAberto] = useState(false)
+  const [temp,   setTemp]   = useState<string[]>([])
+
+  function abrir() { setTemp(selecionados); setAberto(true) }
+  function toggle(item: string) {
+    setTemp(prev => prev.includes(item) ? prev.filter(x => x !== item) : [...prev, item])
+  }
+  function confirmar() { onChange(temp); setAberto(false) }
+
+  const label = selecionados.length === 0
+    ? placeholder
+    : selecionados.length === 1 ? labels[selecionados[0]]
+    : `${selecionados.length} selecionados`
+
+  return (
+    <>
+      <TouchableOpacity style={sd.dropdown} onPress={abrir} activeOpacity={0.7}>
+        <Text style={[sd.dropdownTexto, selecionados.length === 0 && sd.placeholder]}>{label}</Text>
+        <Ionicons name="chevron-down" size={18} color={Colors.textSecondary} />
+      </TouchableOpacity>
+      <Modal visible={aberto} transparent animationType="fade" onRequestClose={() => setAberto(false)}>
+        <Pressable style={sd.overlay} onPress={() => setAberto(false)}>
+          <Pressable style={sd.sheet} onPress={() => {}}>
+            <View style={sd.sheetHeader}>
+              <Text style={sd.sheetTitulo}>{titulo}</Text>
+              <Text style={sd.sheetSub}>{temp.length} selecionado{temp.length !== 1 ? 's' : ''}</Text>
+            </View>
+            <FlatList
+              data={itens}
+              keyExtractor={c => c}
+              style={sd.lista}
+              renderItem={({ item }) => {
+                const sel = temp.includes(item)
+                return (
+                  <TouchableOpacity style={sd.item} onPress={() => toggle(item)} activeOpacity={0.6}>
+                    <Text style={[sd.itemTexto, sel && sd.itemTextoSel]}>{labels[item]}</Text>
+                    {sel
+                      ? <Ionicons name="checkmark-circle" size={20} color={Colors.accent} />
+                      : <View style={sd.circulo} />}
+                  </TouchableOpacity>
+                )
+              }}
+              ItemSeparatorComponent={() => <View style={sd.separador} />}
+            />
+            <TouchableOpacity style={sd.confirmar} onPress={confirmar} activeOpacity={0.8}>
+              <Text style={sd.confirmarTexto}>Confirmar</Text>
+            </TouchableOpacity>
+          </Pressable>
+        </Pressable>
+      </Modal>
+    </>
+  )
+}
+
 export default function ContaOficina() {
   const { user }   = useAuth()
   const router     = useRouter()
@@ -50,8 +135,10 @@ export default function ContaOficina() {
   const [bairro,      setBairro]      = useState('')
   const [cidade,      setCidade]      = useState('')
   const [estado,      setEstado]      = useState('')
-  const [grupos,      setGrupos]      = useState<GrupoDia[]>(GRUPOS_INICIAIS)
-  const [capacidade,  setCapacidade]  = useState(1)
+  const [grupos,         setGrupos]         = useState<GrupoDia[]>(GRUPOS_INICIAIS)
+  const [capacidade,     setCapacidade]     = useState(1)
+  const [categorias,     setCategorias]     = useState<string[]>([])
+  const [formasPagamento,setFormasPagamento]= useState<string[]>([])
   const [loading,     setLoading]     = useState(true)
   const [salvando,    setSalvando]    = useState(false)
   const [uploadando,  setUploadando]  = useState(false)
@@ -74,6 +161,8 @@ export default function ContaOficina() {
         setCidade(res.cidade ?? '')
         setEstado(res.estado ?? '')
         setCapacidade(res.capacidade ?? 1)
+        setCategorias(res.categorias ?? [])
+        setFormasPagamento(res.formasPagamento ?? [])
         if (res.horarios?.length > 0) {
           setGrupos(prev =>
             prev.map(g => {
@@ -193,15 +282,17 @@ export default function ContaOficina() {
         }))
       )
       await api.patch('/oficina/perfil', {
-        nome:       nome.trim()     || undefined,
-        telefone:   telefone.trim() || undefined,
-        cep:        cep.replace(/\D/g, '') || undefined,
-        rua:        rua.trim()      || undefined,
-        numero:     numero.trim()   || undefined,
-        bairro:     bairro.trim()   || undefined,
-        cidade:     cidade.trim()   || undefined,
-        estado:     estado.trim()   || undefined,
-        capacidade: Math.max(1, Math.min(20, capacidade)),
+        nome:            nome.trim()     || undefined,
+        telefone:        telefone.trim() || undefined,
+        cep:             cep.replace(/\D/g, '') || undefined,
+        rua:             rua.trim()      || undefined,
+        numero:          numero.trim()   || undefined,
+        bairro:          bairro.trim()   || undefined,
+        cidade:          cidade.trim()   || undefined,
+        estado:          estado.trim()   || undefined,
+        capacidade:      Math.max(1, Math.min(20, capacidade)),
+        categorias:      categorias.length > 0 ? categorias : undefined,
+        formasPagamento: formasPagamento.length > 0 ? formasPagamento : undefined,
         horarios,
       })
       invalidarCacheOficina()
@@ -292,6 +383,28 @@ export default function ContaOficina() {
           value={telefone}
           onChangeText={setTelefone}
           keyboardType="phone-pad"
+        />
+
+        {/* Nichos */}
+        <Text style={s.secaoLabel}>NICHOS DE ATUAÇÃO</Text>
+        <MultiDropdown
+          itens={CATEGORIAS_LIST}
+          labels={CATEGORIA_LABELS}
+          selecionados={categorias}
+          onChange={setCategorias}
+          placeholder="Selecionar nichos"
+          titulo="Nichos de atuação"
+        />
+
+        {/* Pagamentos */}
+        <Text style={s.secaoLabel}>FORMAS DE PAGAMENTO</Text>
+        <MultiDropdown
+          itens={PAGAMENTOS_LIST}
+          labels={PAGAMENTO_LABELS}
+          selecionados={formasPagamento}
+          onChange={setFormasPagamento}
+          placeholder="Selecionar formas de pagamento"
+          titulo="Formas de pagamento"
         />
 
         {/* Endereço */}
@@ -434,6 +547,25 @@ export default function ContaOficina() {
     </View>
   )
 }
+
+const sd = StyleSheet.create({
+  dropdown:      { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderWidth: 1, borderColor: Colors.border, borderRadius: Radii.md, paddingHorizontal: Spacing.base, height: 52, backgroundColor: Colors.surface, marginBottom: Spacing.md },
+  dropdownTexto: { fontSize: Typography.size.base, color: Colors.text, flex: 1 },
+  placeholder:   { color: Colors.textMuted },
+  overlay:       { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'center', paddingHorizontal: Spacing.lg },
+  sheet:         { backgroundColor: Colors.surface, borderRadius: Radii.xl, overflow: 'hidden', maxHeight: '75%' as any },
+  sheetHeader:   { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: Spacing.lg, paddingVertical: Spacing.base, borderBottomWidth: 1, borderBottomColor: Colors.border },
+  sheetTitulo:   { fontSize: Typography.size.base, fontWeight: Typography.weight.bold, color: Colors.primary },
+  sheetSub:      { fontSize: Typography.size.sm, color: Colors.textMuted },
+  lista:         { flexGrow: 0 },
+  item:          { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: Spacing.lg, paddingVertical: Spacing.base },
+  itemTexto:     { fontSize: Typography.size.base, color: Colors.text, flex: 1 },
+  itemTextoSel:  { color: Colors.primary, fontWeight: Typography.weight.semibold },
+  circulo:       { width: 20, height: 20, borderRadius: 10, borderWidth: 1.5, borderColor: Colors.border },
+  separador:     { height: 1, backgroundColor: Colors.border, marginHorizontal: Spacing.lg },
+  confirmar:     { backgroundColor: Colors.accent, margin: Spacing.base, borderRadius: Radii.full, paddingVertical: Spacing.base, alignItems: 'center' },
+  confirmarTexto:{ color: Colors.surface, fontWeight: Typography.weight.bold, fontSize: Typography.size.base },
+})
 
 const s = StyleSheet.create({
   container:    { flex: 1, backgroundColor: Colors.background },

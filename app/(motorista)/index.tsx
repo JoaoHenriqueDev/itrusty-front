@@ -307,7 +307,7 @@ const s = StyleSheet.create({
   chipTexto:      { fontSize: Typography.size.sm, color: Colors.textSecondary, fontWeight: Typography.weight.medium },
   chipTextoAtivo: { color: Colors.surface },
   skeletonWrap:   { paddingHorizontal: Spacing.lg },
-  lista:          { paddingHorizontal: Spacing.lg, paddingBottom: Spacing.xxl },
+  lista:          { paddingHorizontal: Spacing.lg, paddingBottom: 96 },
   contador:       { fontSize: Typography.size.xs, color: Colors.textMuted, letterSpacing: 1, marginBottom: Spacing.md },
   card:           { flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.surface, borderRadius: Radii.lg, padding: Spacing.md, marginBottom: Spacing.sm, borderWidth: 1, borderColor: Colors.border, ...Shadows.sm },
   foto:           { width: 68, height: 68, backgroundColor: Colors.primary, borderRadius: Radii.md, justifyContent: 'center', alignItems: 'center', marginRight: Spacing.md, overflow: 'hidden' },
