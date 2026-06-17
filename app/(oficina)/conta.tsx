@@ -34,6 +34,13 @@ const GRUPOS_INICIAIS: GrupoDia[] = [
 
 const BUCKET = 'oficina-fotos'
 
+const ALLOWED_IMAGE_TYPES: Record<string, string> = {
+  'image/jpeg': 'jpg',
+  'image/png':  'png',
+  'image/webp': 'webp',
+}
+const MAX_UPLOAD_BYTES = 5 * 1024 * 1024
+
 // ─── Multi-select dropdown ────────────────────────────────────────────────────
 
 const CATEGORIA_LABELS: Record<string, string> = {
@@ -188,10 +195,11 @@ export default function ContaOficina() {
   }
 
   async function uploadBase64(base64: string, mimeType: string) {
+    const ext = ALLOWED_IMAGE_TYPES[mimeType]
+    if (!ext) { setErro('Apenas imagens JPG, PNG ou WebP são permitidas.'); return }
     setUploadando(true)
     setErro('')
     try {
-      const ext  = mimeType.split('/')[1] ?? 'jpg'
       const path = `${user?.id}/${Date.now()}.${ext}`
 
       const binaryStr = atob(base64)
@@ -211,7 +219,7 @@ export default function ContaOficina() {
       invalidarCacheOficina()
       setFotoUrl(publicUrl)
     } catch (err: any) {
-      console.error('[uploadBase64]', err)
+      if (__DEV__) console.error('[uploadBase64]', err instanceof Error ? err.message : String(err))
       setErro(err.message ?? 'Erro no upload')
     } finally {
       setUploadando(false)
@@ -219,10 +227,12 @@ export default function ContaOficina() {
   }
 
   async function uploadFotoWeb(file: File) {
+    const ext = ALLOWED_IMAGE_TYPES[file.type]
+    if (!ext) { setErro('Apenas imagens JPG, PNG ou WebP são permitidas.'); return }
+    if (file.size > MAX_UPLOAD_BYTES) { setErro('A imagem deve ter no máximo 5MB.'); return }
     setUploadando(true)
     setErro('')
     try {
-      const ext  = file.name.split('.').pop() ?? 'jpg'
       const path = `${user?.id}/${Date.now()}.${ext}`
 
       const { data, error } = await supabase.storage
@@ -236,7 +246,7 @@ export default function ContaOficina() {
       invalidarCacheOficina()
       setFotoUrl(publicUrl)
     } catch (err: any) {
-      console.error('[uploadFotoWeb]', err)
+      if (__DEV__) console.error('[uploadFotoWeb]', err instanceof Error ? err.message : String(err))
       setErro(err.message ?? 'Erro no upload')
     } finally {
       setUploadando(false)

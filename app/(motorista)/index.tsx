@@ -261,6 +261,8 @@ export default function HomeMotorista() {
           keyExtractor={o => o.id}
           renderItem={renderOficina}
           showsVerticalScrollIndicator={false}
+          keyboardDismissMode="on-drag"
+          keyboardShouldPersistTaps="handled"
           contentContainerStyle={s.lista}
           refreshControl={
             <RefreshControl

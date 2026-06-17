@@ -14,6 +14,12 @@ import { Colors, Spacing, Typography, Radii } from '../../constants/theme'
 import { useAppAlert } from '../../components/ui/AppAlert'
 import { useHideTabBar } from '../../hooks/useHideTabBar'
 
+const ALLOWED_IMAGE_TYPES: Record<string, string> = {
+  'image/jpeg': 'jpg',
+  'image/png':  'png',
+  'image/webp': 'webp',
+}
+
 type PerfilData = {
   id: string; name: string; email: string
   phone: string | null; role: string | null; fotoUrl: string | null
@@ -69,11 +75,16 @@ export default function EditarPerfilMotorista() {
       return
     }
 
+    const mimeType = asset.mimeType ?? 'image/jpeg'
+    const ext      = ALLOWED_IMAGE_TYPES[mimeType]
+    if (!ext) {
+      alert('Formato inválido', 'Apenas imagens JPG, PNG ou WebP são permitidas.')
+      return
+    }
+
     setUploadando(true)
     try {
-      const mimeType = asset.mimeType ?? 'image/jpeg'
-      const ext      = mimeType.split('/')[1] ?? 'jpg'
-      const path     = `motoristas/${user?.id ?? 'u'}/${Date.now()}.${ext}`
+      const path = `motoristas/${user?.id ?? 'u'}/${Date.now()}.${ext}`
 
       const binaryStr = atob(asset.base64)
       const bytes     = new Uint8Array(binaryStr.length)

@@ -35,7 +35,7 @@ export default function Cadastro() {
   const [senhaVisivel, setSenhaVisivel] = useState(false)
   const [termos,       setTermos]       = useState(false)
   const [erros,        setErros]        = useState<Erros>({})
-  const { signIn } = useAuth()
+  const { signIn, socialSignIn } = useAuth()
   const router     = useRouter()
   const insets     = useSafeAreaInsets()
 
@@ -58,11 +58,14 @@ export default function Cadastro() {
         })
         if (error || !data.url) return
         const result = await WebBrowser.openAuthSessionAsync(data.url, 'itrusty://')
-        if (result.type === 'success') {
-          const { data: { session } } = await supabase.auth.getSession()
-          if (session) {
-            const res = await api.post<AuthResponse>('/auth/social', { supabaseToken: session.access_token })
-            await signIn(res.accessToken, res.user, res.refreshToken)
+        if (result.type === 'success' && result.url) {
+          const fragment = result.url.split('#')[1] ?? result.url.split('?')[1] ?? ''
+          const params   = new URLSearchParams(fragment)
+          const at       = params.get('access_token')
+          const rt       = params.get('refresh_token')
+          if (at && rt) {
+            await socialSignIn(at)
+            supabase.auth.setSession({ access_token: at, refresh_token: rt }).catch(() => {})
           }
         }
       }
@@ -75,9 +78,11 @@ export default function Cadastro() {
 
   async function handleCadastro() {
     const novosErros: Erros = {}
-    if (!nome)   novosErros.nome   = 'Preencha o nome'
-    if (!email)  novosErros.email  = 'Preencha o e-mail'
-    if (!senha)  novosErros.senha  = 'Preencha a senha'
+    if (!nome)  novosErros.nome  = 'Preencha o nome'
+    if (!email) novosErros.email = 'Preencha o e-mail'
+    if (!senha || senha.length < 8 || !/[A-Za-z]/.test(senha) || !/\d/.test(senha)) {
+      novosErros.senha = 'Senha deve ter 8+ caracteres com letras e números'
+    }
     if (!termos) novosErros.termos = 'Aceite os termos para continuar'
     if (Object.keys(novosErros).length) { setErros(novosErros); return }
 
@@ -203,7 +208,6 @@ export default function Cadastro() {
 
         <View style={s.socialRow}>
           <SocialButton provider="google" onPress={handleGoogle} loading={loadingGoogle} />
-          <SocialButton provider="apple" onPress={() => {}} />
         </View>
 
         <TouchableOpacity onPress={() => router.push('/(auth)/login')} hitSlop={8}>

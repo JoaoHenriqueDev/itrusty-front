@@ -10,6 +10,7 @@ import { Colors, Spacing, Typography, Radii, Shadows } from '../../constants/the
 import { AppHeader } from '../../components/ui/AppHeader'
 import { useNotificacoes } from '../../hooks/useNotificacoes'
 import { NotificacaoBanner } from '../../components/NotificacaoBanner'
+import { useAppAlert } from '../../components/ui/AppAlert'
 
 type PerfilData = {
   nome:     string
@@ -63,6 +64,7 @@ export default function PerfilOficina() {
   const router  = useRouter()
   const insets  = useSafeAreaInsets()
   const { notificacoes, naoLidas, marcarLida } = useNotificacoes()
+  const { confirm } = useAppAlert()
   const [dados, setDados] = useState<PerfilData | null>(null)
 
   useFocusEffect(useCallback(() => {
@@ -190,7 +192,12 @@ export default function PerfilOficina() {
           <MenuItem
             icone="log-out-outline"
             label="Sair"
-            onPress={signOut}
+            onPress={() => confirm(
+              'Sair da conta?',
+              'Você precisará fazer login novamente para acessar o app.',
+              signOut,
+              { confirmText: 'Sair', destructive: true }
+            )}
             cor={Colors.error}
           />
         </View>

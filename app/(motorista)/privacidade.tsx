@@ -75,7 +75,7 @@ const SECOES: Secao[] = [
   },
 ]
 
-export default function PrivacidadeOficina() {
+export default function PrivacidadeMotorista() {
   const insets = useSafeAreaInsets()
   const router = useRouter()
 

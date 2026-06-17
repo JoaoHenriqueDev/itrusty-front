@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import React, { useCallback, useState } from 'react'
 import {
   View, Text, FlatList, StyleSheet, Modal,
   TouchableOpacity, RefreshControl, Image, TextInput, ActivityIndicator,
@@ -26,13 +26,15 @@ type Agendamento = {
   avaliacao:     { nota: number; comentario: string | null } | null
 }
 
-const STATUS_CONFIG = {
+type IconName = keyof typeof Ionicons.glyphMap
+
+const STATUS_CONFIG: Record<string, { label: string; cor: string; icone: IconName }> = {
   AGUARDANDO: { label: 'Aguardando confirmação', cor: Colors.warning,       icone: 'time-outline'             },
   CONFIRMADO: { label: 'Confirmado',              cor: Colors.success,       icone: 'checkmark-circle-outline' },
   RECUSADO:   { label: 'Recusado',                cor: Colors.error,         icone: 'close-circle-outline'     },
   CONCLUIDO:  { label: 'Concluído',               cor: Colors.textSecondary, icone: 'checkmark-done-outline'   },
   CANCELADO:  { label: 'Cancelado',               cor: Colors.textMuted,     icone: 'ban-outline'              },
-} as const
+}
 
 function formatData(iso: string) {
   const d = new Date(iso)
@@ -42,17 +44,104 @@ function formatPreco(v: number) {
   return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 }
 
+// ─── Card memoizado — só re-renderiza quando o item ou o cancelando mudam ───
+const AgendamentoCard = React.memo(function AgendamentoCard({
+  item,
+  cancelando,
+  onCancelar,
+  onAvaliar,
+}: {
+  item:       Agendamento
+  cancelando: string | null
+  onCancelar: (ag: Agendamento) => void
+  onAvaliar:  (ag: Agendamento) => void
+}) {
+  const cfg = STATUS_CONFIG[item.status] ?? STATUS_CONFIG.CANCELADO
+
+  return (
+    <View style={s.card}>
+      <View style={s.cardHeader}>
+        <View style={s.foto}>
+          {item.oficina.fotoUrl
+            ? <Image source={{ uri: item.oficina.fotoUrl }} style={StyleSheet.absoluteFillObject} resizeMode="cover" />
+            : <Ionicons name="storefront-outline" size={22} color={Colors.surface} />}
+        </View>
+        <View style={s.cardHeaderInfo}>
+          <Text style={s.oficinaNome} numberOfLines={1}>{item.oficina.nome}</Text>
+          <Text style={s.oficinaBairro} numberOfLines={1}>{item.oficina.bairro}</Text>
+        </View>
+        <View style={[s.badge, { backgroundColor: cfg.cor + '18' }]}>
+          <Ionicons name={cfg.icone} size={13} color={cfg.cor} />
+          <Text style={[s.badgeTexto, { color: cfg.cor }]}>{cfg.label}</Text>
+        </View>
+      </View>
+
+      <View style={s.separador} />
+
+      <View style={s.detalhes}>
+        <View style={s.detalhe}>
+          <Ionicons name="construct-outline" size={14} color={Colors.accent} />
+          <Text style={s.detalheTexto} numberOfLines={1}>{item.servico.nome}</Text>
+        </View>
+        <View style={s.detalhe}>
+          <Ionicons name="car-outline" size={14} color={Colors.accent} />
+          <Text style={s.detalheTexto}>{item.veiculo.marca} {item.veiculo.modelo} · {item.veiculo.placa}</Text>
+        </View>
+        <View style={s.detalheRow}>
+          <View style={s.detalhe}>
+            <Ionicons name="calendar-outline" size={14} color={Colors.accent} />
+            <Text style={s.detalheTexto}>{formatData(item.dataServico)}</Text>
+          </View>
+          <View style={s.detalhe}>
+            <Ionicons name="time-outline" size={14} color={Colors.accent} />
+            <Text style={s.detalheTexto}>{item.horaInicio} – {item.horaFim}</Text>
+          </View>
+        </View>
+      </View>
+
+      <View style={s.rodape}>
+        <View>
+          <Text style={s.precoLabel}>Estimado</Text>
+          <Text style={s.preco}>{formatPreco(item.precoEstimado)}</Text>
+        </View>
+        {item.status === 'CONCLUIDO' && (
+          item.avaliacao
+            ? <StarRating nota={item.avaliacao.nota} tamanho={15} />
+            : (
+              <TouchableOpacity style={s.avaliarBtn} onPress={() => onAvaliar(item)} activeOpacity={0.8}>
+                <Ionicons name="star-outline" size={13} color={Colors.accent} />
+                <Text style={s.avaliarBtnTexto}>Avaliar</Text>
+              </TouchableOpacity>
+            )
+        )}
+        {(item.status === 'AGUARDANDO' || item.status === 'CONFIRMADO') && (
+          <TouchableOpacity
+            style={s.cancelarBtn}
+            onPress={() => onCancelar(item)}
+            disabled={cancelando === item.id}
+            activeOpacity={0.75}
+          >
+            {cancelando === item.id
+              ? <ActivityIndicator size="small" color={Colors.error} />
+              : <Text style={s.cancelarBtnTexto}>Cancelar</Text>}
+          </TouchableOpacity>
+        )}
+      </View>
+    </View>
+  )
+})
+
 export default function Agendamentos() {
   const insets = useSafeAreaInsets()
   const router = useRouter()
-  const { confirm } = useAppAlert()
+  const { confirm, alert } = useAppAlert()
 
   const [agendamentos, setAgendamentos] = useState<Agendamento[]>([])
   const [loading,      setLoading]      = useState(true)
   const [refresh,      setRefresh]      = useState(false)
   const [cancelando,   setCancelando]   = useState<string | null>(null)
 
-  function handleCancelar(ag: Agendamento) {
+  const handleCancelar = useCallback((ag: Agendamento) => {
     confirm(
       'Cancelar agendamento?',
       `${ag.servico.nome} na ${ag.oficina.nome} em ${formatData(ag.dataServico)}.`,
@@ -63,13 +152,15 @@ export default function Agendamentos() {
           setAgendamentos(prev =>
             prev.map(a => a.id === ag.id ? { ...a, status: 'CANCELADO' } : a)
           )
-        } catch {} finally {
+        } catch (err: any) {
+          alert('Ops!', err.message ?? 'Não foi possível cancelar o agendamento. Tente novamente.')
+        } finally {
           setCancelando(null)
         }
       },
       { confirmText: 'Sim, cancelar', destructive: true },
     )
-  }
+  }, [confirm, alert])
 
   // modal de avaliação
   const [modalAg,    setModalAg]    = useState<Agendamento | null>(null)
@@ -77,7 +168,7 @@ export default function Agendamentos() {
   const [comentario, setComentario] = useState('')
   const [enviando,   setEnviando]   = useState(false)
 
-  function abrirModal(ag: Agendamento) { setModalAg(ag); setNota(0); setComentario('') }
+  const abrirModal  = useCallback((ag: Agendamento) => { setModalAg(ag); setNota(0); setComentario('') }, [])
   function fecharModal() { setModalAg(null) }
 
   async function enviarAvaliacao() {
@@ -93,7 +184,9 @@ export default function Agendamentos() {
         prev.map(a => a.id === modalAg.id ? { ...a, avaliacao: { nota, comentario: comentario.trim() || null } } : a)
       )
       fecharModal()
-    } catch {} finally {
+    } catch (err: any) {
+      alert('Ops!', err.message ?? 'Não foi possível enviar a avaliação. Tente novamente.')
+    } finally {
       setEnviando(false)
     }
   }
@@ -114,86 +207,14 @@ export default function Agendamentos() {
   // Recarrega toda vez que a aba ganha foco
   useFocusEffect(useCallback(() => { carregar() }, [carregar]))
 
-  function renderItem({ item }: { item: Agendamento }) {
-    const cfg = STATUS_CONFIG[item.status] ?? STATUS_CONFIG.CANCELADO
-
-    return (
-      <View style={s.card}>
-        {/* Cabeçalho do card */}
-        <View style={s.cardHeader}>
-          <View style={s.foto}>
-            {item.oficina.fotoUrl
-              ? <Image source={{ uri: item.oficina.fotoUrl }} style={StyleSheet.absoluteFillObject} resizeMode="cover" />
-              : <Ionicons name="storefront-outline" size={22} color={Colors.surface} />}
-          </View>
-          <View style={s.cardHeaderInfo}>
-            <Text style={s.oficinaNome} numberOfLines={1}>{item.oficina.nome}</Text>
-            <Text style={s.oficinaBairro} numberOfLines={1}>{item.oficina.bairro}</Text>
-          </View>
-          {/* Badge de status */}
-          <View style={[s.badge, { backgroundColor: cfg.cor + '18' }]}>
-            <Ionicons name={cfg.icone as any} size={13} color={cfg.cor} />
-            <Text style={[s.badgeTexto, { color: cfg.cor }]}>{cfg.label}</Text>
-          </View>
-        </View>
-
-        {/* Separador */}
-        <View style={s.separador} />
-
-        {/* Detalhes */}
-        <View style={s.detalhes}>
-          <View style={s.detalhe}>
-            <Ionicons name="construct-outline" size={14} color={Colors.accent} />
-            <Text style={s.detalheTexto} numberOfLines={1}>{item.servico.nome}</Text>
-          </View>
-          <View style={s.detalhe}>
-            <Ionicons name="car-outline" size={14} color={Colors.accent} />
-            <Text style={s.detalheTexto}>{item.veiculo.marca} {item.veiculo.modelo} · {item.veiculo.placa}</Text>
-          </View>
-          <View style={s.detalheRow}>
-            <View style={s.detalhe}>
-              <Ionicons name="calendar-outline" size={14} color={Colors.accent} />
-              <Text style={s.detalheTexto}>{formatData(item.dataServico)}</Text>
-            </View>
-            <View style={s.detalhe}>
-              <Ionicons name="time-outline" size={14} color={Colors.accent} />
-              <Text style={s.detalheTexto}>{item.horaInicio} – {item.horaFim}</Text>
-            </View>
-          </View>
-        </View>
-
-        {/* Rodapé */}
-        <View style={s.rodape}>
-          <View>
-            <Text style={s.precoLabel}>Estimado</Text>
-            <Text style={s.preco}>{formatPreco(item.precoEstimado)}</Text>
-          </View>
-          {item.status === 'CONCLUIDO' && (
-            item.avaliacao
-              ? <StarRating nota={item.avaliacao.nota} tamanho={15} />
-              : (
-                <TouchableOpacity style={s.avaliarBtn} onPress={() => abrirModal(item)} activeOpacity={0.8}>
-                  <Ionicons name="star-outline" size={13} color={Colors.accent} />
-                  <Text style={s.avaliarBtnTexto}>Avaliar</Text>
-                </TouchableOpacity>
-              )
-          )}
-          {(item.status === 'AGUARDANDO' || item.status === 'CONFIRMADO') && (
-            <TouchableOpacity
-              style={s.cancelarBtn}
-              onPress={() => handleCancelar(item)}
-              disabled={cancelando === item.id}
-              activeOpacity={0.75}
-            >
-              {cancelando === item.id
-                ? <ActivityIndicator size="small" color={Colors.error} />
-                : <Text style={s.cancelarBtnTexto}>Cancelar</Text>}
-            </TouchableOpacity>
-          )}
-        </View>
-      </View>
-    )
-  }
+  const renderItem = useCallback(({ item }: { item: Agendamento }) => (
+    <AgendamentoCard
+      item={item}
+      cancelando={cancelando}
+      onCancelar={handleCancelar}
+      onAvaliar={abrirModal}
+    />
+  ), [cancelando, handleCancelar, abrirModal])
 
   return (
     <View style={[s.container, { paddingTop: insets.top + Spacing.sm }]}>
@@ -246,6 +267,8 @@ export default function Agendamentos() {
           keyExtractor={a => a.id}
           renderItem={renderItem}
           showsVerticalScrollIndicator={false}
+          keyboardDismissMode="on-drag"
+          keyboardShouldPersistTaps="handled"
           contentContainerStyle={s.lista}
           refreshControl={
             <RefreshControl refreshing={refresh} onRefresh={() => carregar(true)} tintColor={Colors.accent} />

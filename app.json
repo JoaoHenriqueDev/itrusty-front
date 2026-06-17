@@ -2,6 +2,7 @@
   "expo": {
     "name": "iTrusty",
     "slug": "itrusty-front",
+    "owner": "itrusty-company",
     "scheme": "itrusty",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -33,7 +34,7 @@
       ],
       "config": {
         "googleMaps": {
-          "apiKey": "AIzaSyCBtFQMF6OLDyWmYqsGgn7PUGxJ65yktuY"
+          "apiKey": "$EXPO_PUBLIC_GOOGLE_MAPS_API_KEY"
         }
       }
     },

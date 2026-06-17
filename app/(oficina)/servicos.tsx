@@ -12,6 +12,7 @@ import { SkeletonCard } from '../../components/ui/SkeletonCard'
 import { useOficina } from '../../hooks/useOficina'
 import { useNotificacoes } from '../../hooks/useNotificacoes'
 import { NotificacaoBanner } from '../../components/NotificacaoBanner'
+import { useAppAlert } from '../../components/ui/AppAlert'
 
 type Servico = {
   id:             string
@@ -37,6 +38,8 @@ export default function ServicosOficina() {
   const { oficina } = useOficina()
   const { notificacoes, naoLidas, marcarLida } = useNotificacoes()
 
+  const { alert } = useAppAlert()
+
   const [servicos,  setServicos]  = useState<Servico[]>([])
   const [loading,   setLoading]   = useState(true)
   const [toggling,  setToggling]  = useState<string | null>(null)
@@ -57,8 +60,9 @@ export default function ServicosOficina() {
     setServicos(prev => prev.map(x => x.id === sv.id ? { ...x, ativo: novoAtivo } : x))
     try {
       await api.patch(`/oficina/servicos/${sv.id}`, { ativo: novoAtivo })
-    } catch {
+    } catch (err: any) {
       setServicos(prev => prev.map(x => x.id === sv.id ? { ...x, ativo: sv.ativo } : x))
+      alert('Ops!', err.message ?? 'Não foi possível atualizar o serviço.')
     } finally {
       setToggling(null)
     }

@@ -12,6 +12,7 @@ import { SkeletonMetrics, SkeletonRow } from '../../components/ui/SkeletonCard'
 import { useOficina } from '../../hooks/useOficina'
 import { useNotificacoes } from '../../hooks/useNotificacoes'
 import { NotificacaoBanner } from '../../components/NotificacaoBanner'
+import { useAppAlert } from '../../components/ui/AppAlert'
 
 type Novo = {
   id:            string
@@ -51,6 +52,8 @@ export default function HomeOficina() {
   const { oficina } = useOficina()
   const { notificacoes, naoLidas, marcarLida } = useNotificacoes()
 
+  const { alert } = useAppAlert()
+
   const [dados,   setDados]   = useState<Dashboard | null>(null)
   const [loading, setLoading] = useState(true)
   const [refresh, setRefresh] = useState(false)
@@ -70,19 +73,28 @@ export default function HomeOficina() {
   useFocusEffect(useCallback(() => { carregar() }, [carregar]))
 
   async function handleAceitar(id: string) {
+    // Remove imediatamente da lista (otimista) — UI instantânea
+    setDados(prev => prev ? { ...prev, novos: prev.novos.filter(a => a.id !== id) } : prev)
     setAcao(id)
     try {
       await api.patch(`/oficina/agendamentos/${id}/aceitar`, {})
-      await carregar()
-    } catch {} finally { setAcao(null) }
+      carregar()  // atualiza métricas e confirmados em background
+    } catch (err: any) {
+      await carregar()  // reverte em caso de erro
+      alert('Ops!', err.message ?? 'Não foi possível aceitar o agendamento.')
+    } finally { setAcao(null) }
   }
 
   async function handleRecusar(id: string) {
+    setDados(prev => prev ? { ...prev, novos: prev.novos.filter(a => a.id !== id) } : prev)
     setAcao(id)
     try {
       await api.patch(`/oficina/agendamentos/${id}/recusar`, {})
+      carregar()
+    } catch (err: any) {
       await carregar()
-    } catch {} finally { setAcao(null) }
+      alert('Ops!', err.message ?? 'Não foi possível recusar o agendamento.')
+    } finally { setAcao(null) }
   }
 
   const primeiraNotif = notificacoes[0]

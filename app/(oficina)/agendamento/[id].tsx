@@ -61,7 +61,9 @@ export default function DetalheAgendamento() {
     try {
       await api.patch(`/oficina/agendamentos/${id}/aceitar`, {})
       setAg(prev => prev ? { ...prev, status: 'CONFIRMADO' } : prev)
-    } catch {} finally { setAcao(false) }
+    } catch (err: any) {
+      alert('Erro', err.message ?? 'Não foi possível aceitar o agendamento.')
+    } finally { setAcao(false) }
   }
 
   async function handleRecusar() {
@@ -69,7 +71,19 @@ export default function DetalheAgendamento() {
     try {
       await api.patch(`/oficina/agendamentos/${id}/recusar`, {})
       router.navigate('/(oficina)/' as any)
-    } catch {} finally { setAcao(false) }
+    } catch (err: any) {
+      alert('Erro', err.message ?? 'Não foi possível recusar o agendamento.')
+    } finally { setAcao(false) }
+  }
+
+  async function handleIniciar() {
+    setAcao(true)
+    try {
+      await api.patch(`/oficina/agendamentos/${id}/iniciar`, {})
+      setAg(prev => prev ? { ...prev, status: 'EM_ANDAMENTO' } : prev)
+    } catch (err: any) {
+      alert('Erro', err.message ?? 'Não foi possível iniciar o serviço.')
+    } finally { setAcao(false) }
   }
 
   async function handleFinalizar() {
@@ -108,7 +122,12 @@ export default function DetalheAgendamento() {
         {ag.motorista.telefone ? (
           <TouchableOpacity
             style={s.iconBtn}
-            onPress={() => Linking.openURL(`tel:${ag.motorista.telefone}`)}
+            onPress={() => {
+              const tel = ag.motorista.telefone
+              if (tel && /^\+?[\d\s\-()·.]{6,20}$/.test(tel)) {
+                Linking.openURL(`tel:${tel.replace(/[^\d+]/g, '')}`)
+              }
+            }}
             accessibilityLabel="Ligar para o motorista"
             accessibilityRole="button"
           >
@@ -210,6 +229,22 @@ export default function DetalheAgendamento() {
         )}
 
         {ag.status === 'CONFIRMADO' && (
+          <TouchableOpacity
+            style={[s.finalizarBtn, acao && { opacity: 0.6 }]}
+            onPress={handleIniciar}
+            disabled={acao}
+            activeOpacity={0.8}
+          >
+            {acao
+              ? <ActivityIndicator size="small" color={Colors.surface} />
+              : <>
+                  <Ionicons name="play" size={18} color={Colors.surface} />
+                  <Text style={s.finalizarTexto}>Iniciar serviço</Text>
+                </>}
+          </TouchableOpacity>
+        )}
+
+        {ag.status === 'EM_ANDAMENTO' && (
           <TouchableOpacity
             style={[s.finalizarBtn, acao && { opacity: 0.6 }]}
             onPress={handleFinalizar}

@@ -15,13 +15,15 @@ export default function OficinaExterna() {
     lng:      string
   }>()
 
-  const latitude  = lat  ? parseFloat(lat)  : null
-  const longitude = lng  ? parseFloat(lng)  : null
+  const latNum    = parseFloat(lat ?? '')
+  const lngNum    = parseFloat(lng ?? '')
+  const latitude  = !isNaN(latNum) && latNum  >= -90  && latNum  <= 90  ? latNum  : null
+  const longitude = !isNaN(lngNum) && lngNum >= -180 && lngNum <= 180 ? lngNum : null
   const temMapa   = latitude !== null && longitude !== null
-  const temTelefone = telefone && telefone !== 'null' && telefone !== ''
+  const temTelefone = !!(telefone && telefone !== 'null' && telefone !== '' && /^\+?[\d\s\-()·.]{6,20}$/.test(telefone))
 
   function ligar() {
-    if (temTelefone) Linking.openURL(`tel:${telefone}`)
+    if (temTelefone) Linking.openURL(`tel:${telefone.replace(/[^\d+]/g, '')}`)
   }
 
   function abrirRota() {

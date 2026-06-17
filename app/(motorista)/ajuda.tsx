@@ -14,12 +14,12 @@ const CATEGORIAS: Categoria[] = [
     icone: 'person-circle-outline',
     itens: [
       {
-        pergunta: 'Como altero os dados da minha oficina?',
-        resposta: 'Vá em Perfil → Dados da oficina. Você pode editar o nome, foto, endereço e horários de funcionamento.',
+        pergunta: 'Como altero meus dados cadastrais?',
+        resposta: 'Vá em Perfil → Editar perfil. Você pode atualizar seu nome, telefone e endereço.',
       },
       {
-        pergunta: 'Como adiciono ou altero a foto da minha oficina?',
-        resposta: 'Na tela de Dados da oficina, toque no banner de foto no topo da página para selecionar uma imagem da sua galeria.',
+        pergunta: 'Como adiciono ou troco minha foto de perfil?',
+        resposta: 'Na tela de Editar perfil, toque na sua foto ou no ícone de câmera para selecionar uma imagem da sua galeria.',
       },
       {
         pergunta: 'Como altero minha senha?',
@@ -28,38 +28,38 @@ const CATEGORIAS: Categoria[] = [
     ],
   },
   {
-    titulo: 'Serviços',
-    icone: 'construct-outline',
+    titulo: 'Veículos',
+    icone: 'car-outline',
     itens: [
       {
-        pergunta: 'Como adiciono um novo serviço?',
-        resposta: 'Vá em Perfil → Gerenciar serviços → botão "+" no canto superior. Preencha o nome, preço e tempo estimado do serviço.',
+        pergunta: 'Como adiciono um novo veículo?',
+        resposta: 'Vá em Perfil → Meus veículos → botão "+" no canto superior. Informe marca, modelo, ano e placa.',
       },
       {
-        pergunta: 'Posso desativar um serviço temporariamente?',
-        resposta: 'Sim. Na lista de serviços, utilize o toggle ao lado de cada serviço para ativá-lo ou desativá-lo sem precisar excluí-lo.',
+        pergunta: 'Posso ter mais de um veículo cadastrado?',
+        resposta: 'Sim. Você pode cadastrar quantos veículos precisar e selecionar o veículo desejado na hora de agendar um serviço.',
       },
       {
-        pergunta: 'Como excluo um serviço?',
-        resposta: 'Toque no serviço para abrir os detalhes, role até o final e selecione "Excluir serviço". A ação é permanente e não pode ser desfeita.',
+        pergunta: 'Como removo um veículo?',
+        resposta: 'Em Meus veículos, toque no veículo que deseja remover e selecione "Remover veículo". Veículos com agendamentos ativos não podem ser removidos.',
       },
     ],
   },
   {
-    titulo: 'Agenda e Agendamentos',
+    titulo: 'Agendamentos',
     icone: 'calendar-outline',
     itens: [
       {
-        pergunta: 'Como confirmo um agendamento?',
-        resposta: 'Na aba Agenda, toque no agendamento e selecione "Confirmar". O motorista será notificado automaticamente.',
+        pergunta: 'Como faço um agendamento?',
+        resposta: 'Na aba Início, encontre uma oficina e toque nela. Selecione o serviço desejado, escolha o horário disponível e confirme o agendamento.',
       },
       {
         pergunta: 'Como cancelo um agendamento?',
-        resposta: 'Abra o agendamento na aba Agenda e selecione "Cancelar". Informe o motivo para que o cliente seja notificado corretamente.',
+        resposta: 'Em Meus agendamentos, toque no agendamento e selecione "Cancelar". Recomendamos cancelar com pelo menos 2 horas de antecedência.',
       },
       {
-        pergunta: 'Posso definir horários diferentes para cada dia?',
-        resposta: 'Sim. Em Perfil → Horários de funcionamento, você pode configurar horários de abertura e fechamento separadamente para dias úteis, sábado e domingo.',
+        pergunta: 'Como sei quando meu agendamento foi confirmado?',
+        resposta: 'Você receberá uma notificação assim que a oficina aceitar ou recusar seu agendamento. Você também pode verificar o status em Meus agendamentos.',
       },
     ],
   },
@@ -72,14 +72,14 @@ const CATEGORIAS: Categoria[] = [
         resposta: 'Verifique sua conexão com a internet. Se o problema persistir, feche e abra o aplicativo novamente. Caso continue, entre em contato com nosso suporte.',
       },
       {
-        pergunta: 'Meus dados não foram salvos. O que aconteceu?',
-        resposta: 'Certifique-se de que você tem conexão com a internet ao salvar alterações. Se o problema persistir, entre em contato com o suporte informando o que tentou fazer.',
+        pergunta: 'Não estou recebendo notificações. O que fazer?',
+        resposta: 'Verifique se as notificações do iTrusty estão habilitadas nas configurações do seu celular. Em caso de dúvida, entre em contato com o suporte.',
       },
     ],
   },
 ]
 
-export default function AjudaOficina() {
+export default function AjudaMotorista() {
   const insets  = useSafeAreaInsets()
   const router  = useRouter()
   const [busca, setBusca]     = useState('')
@@ -137,7 +137,6 @@ export default function AjudaOficina() {
               <Ionicons name={cat.icone} size={18} color={Colors.accent} />
               <Text style={s.categoriaTitulo}>{cat.titulo}</Text>
             </View>
-
             <View style={s.card}>
               {cat.itens.map((item, idx) => {
                 const key    = `${cat.titulo}-${idx}`
@@ -145,14 +144,8 @@ export default function AjudaOficina() {
                 return (
                   <View key={key}>
                     {idx > 0 && <View style={s.divider} />}
-                    <TouchableOpacity
-                      style={s.faqLinha}
-                      onPress={() => toggleItem(key)}
-                      activeOpacity={0.7}
-                    >
-                      <Text style={s.pergunta} numberOfLines={aberto ? undefined : 2}>
-                        {item.pergunta}
-                      </Text>
+                    <TouchableOpacity style={s.faqLinha} onPress={() => toggleItem(key)} activeOpacity={0.7}>
+                      <Text style={s.pergunta} numberOfLines={aberto ? undefined : 2}>{item.pergunta}</Text>
                       <Ionicons
                         name={aberto ? 'chevron-up' : 'chevron-down'}
                         size={16}

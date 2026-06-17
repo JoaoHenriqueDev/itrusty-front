@@ -301,7 +301,7 @@ export default function Agendar() {
               { icon: 'cash-outline',      texto: formatPreco(servicoSelecionado.preco) },
             ].map(({ icon, texto }) => (
               <View key={icon} style={s.resumoLinha}>
-                <Ionicons name={icon as any} size={16} color={Colors.accent} />
+                <Ionicons name={icon as keyof typeof Ionicons.glyphMap} size={16} color={Colors.accent} />
                 <Text style={s.resumoTexto}>{texto}</Text>
               </View>
             ))}

@@ -1,12 +1,14 @@
 import { Slot, useRouter, useSegments, useRootNavigationState } from 'expo-router'
 import { useEffect } from 'react'
+import { View, StyleSheet } from 'react-native'
 import { AuthProvider, useAuth } from '../contexts/AuthContext'
 import SplashScreen from '../components/SplashScreen'
 import { usePushNotifications } from '../hooks/usePushNotifications'
 import { AppAlertProvider } from '../components/ui/AppAlert'
+import { ErrorBoundary } from '../components/ErrorBoundary'
 
 function RootLayoutNav() {
-  const { token, user, loading } = useAuth()
+  const { token, user, loading, transitioning } = useAuth()
   const router = useRouter()
   const segments = useSegments()
   const navigationState = useRootNavigationState()
@@ -46,19 +48,34 @@ function RootLayoutNav() {
       router.replace('/(oficina)/')
       return
     }
-  }, [token, user, loading, navigationState?.key])
+  }, [token, user, loading, navigationState?.key, segments])
 
   if (loading || !navigationState?.key) return <SplashScreen />
 
-  return <Slot />
+  return (
+    <View style={s.container}>
+      <Slot />
+      {transitioning && (
+        <View style={StyleSheet.absoluteFillObject}>
+          <SplashScreen />
+        </View>
+      )}
+    </View>
+  )
 }
+
+const s = StyleSheet.create({
+  container: { flex: 1 },
+})
 
 export default function RootLayout() {
   return (
-    <AppAlertProvider>
-      <AuthProvider>
-        <RootLayoutNav />
-      </AuthProvider>
-    </AppAlertProvider>
+    <ErrorBoundary>
+      <AppAlertProvider>
+        <AuthProvider>
+          <RootLayoutNav />
+        </AuthProvider>
+      </AppAlertProvider>
+    </ErrorBoundary>
   )
 }

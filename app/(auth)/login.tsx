@@ -31,7 +31,7 @@ export default function Login() {
   const [loadingGoogle,setLoadingGoogle]= useState(false)
   const [senhaVisivel, setSenhaVisivel] = useState(false)
   const [erros,        setErros]        = useState<Erros>({})
-  const { signIn } = useAuth()
+  const { signIn, socialSignIn } = useAuth()
   const router     = useRouter()
   const insets     = useSafeAreaInsets()
 
@@ -78,12 +78,9 @@ export default function Login() {
           const at       = params.get('access_token')
           const rt       = params.get('refresh_token')
           if (at && rt) {
-            await supabase.auth.setSession({ access_token: at, refresh_token: rt })
-          }
-          const { data: { session } } = await supabase.auth.getSession()
-          if (session) {
-            const res = await api.post<LoginResponse>('/auth/social', { supabaseToken: session.access_token })
-            await signIn(res.accessToken, res.user, res.refreshToken)
+            await socialSignIn(at)
+            // setSession em background — atualiza o cliente Supabase sem bloquear
+            supabase.auth.setSession({ access_token: at, refresh_token: rt }).catch(() => {})
           }
         }
       }
@@ -106,7 +103,7 @@ export default function Login() {
       >
         <Image source={require('../../assets/logo.png')} style={s.logo} resizeMode="contain" />
 
-        <Text style={s.titulo}>Bom te ver{'\n'}de novo.</Text>
+        <Text style={s.titulo}>Bem vindo.</Text>
         <Text style={s.subtitulo}>Entra e agenda seu próximo serviço em 2 toques.</Text>
 
         <View style={s.form}>
@@ -165,7 +162,6 @@ export default function Login() {
 
         <View style={s.socialRow}>
           <SocialButton provider="google" onPress={handleGoogle} loading={loadingGoogle} />
-          <SocialButton provider="apple" onPress={() => {}} />
         </View>
 
         <TouchableOpacity onPress={() => router.push('/(auth)/cadastro')} hitSlop={8}>

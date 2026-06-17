@@ -2,6 +2,8 @@ import React, { createContext, useContext, useEffect, useRef, useState } from 'r
 import { supabase } from '../services/supabase'
 import { api, setUnauthorizedCallback } from '../services/api'
 import { saveSecure, getSecure, deleteSecure } from '../utils/storage'
+import { invalidarCacheOficina } from '../hooks/useOficina'
+import { resetarNotificacoes } from '../hooks/useNotificacoes'
 
 type User = {
   id: string
@@ -9,13 +11,25 @@ type User = {
   role: 'MOTORISTA' | 'OFICINA' | null
 }
 
+function isValidUser(obj: unknown): obj is User {
+  return (
+    typeof obj === 'object' &&
+    obj !== null &&
+    typeof (obj as any).id   === 'string' &&
+    typeof (obj as any).name === 'string' &&
+    ((obj as any).role === 'MOTORISTA' || (obj as any).role === 'OFICINA' || (obj as any).role === null)
+  )
+}
+
 type AuthContextType = {
   token: string | null
   user: User | null
   loading: boolean
+  transitioning: boolean
   signIn: (accessToken: string, user: User, refreshToken: string) => Promise<void>
   signOut: () => Promise<void>
   updateUser: (user: User) => void
+  socialSignIn: (supabaseToken: string) => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType>({} as AuthContextType)
@@ -26,9 +40,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     user: null,
   })
   const [loading, setLoading] = useState(true)
+  const [transitioning, setTransitioning] = useState(false)
   const isSigningInRef = useRef(false)
 
   async function signIn(accessToken: string, newUser: User, refreshToken: string) {
+    if (__DEV__) console.log('[Auth] signIn — role:', newUser.role, 'id:', newUser.id)
     isSigningInRef.current = true
     await Promise.all([
       saveSecure('token', accessToken),
@@ -40,23 +56,41 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   async function signOut() {
-    // Revoga o refreshToken no servidor (best-effort — logout local ocorre independente)
-    try {
-      const refreshToken = await getSecure('refreshToken')
-      if (refreshToken) {
-        await api.post('/auth/logout', { refreshToken })
-      }
-    } catch {
-      // Falha silenciosa — o logout local prossegue normalmente
-    }
-
+    setTransitioning(true)
+    const refreshToken = await getSecure('refreshToken')
     await Promise.all([
       deleteSecure('token'),
       deleteSecure('refreshToken'),
       deleteSecure('user'),
     ])
-    await supabase.auth.signOut()
+    invalidarCacheOficina()
+    resetarNotificacoes()
     setAuth({ token: null, user: null })
+    // Fire-and-forget — não bloqueia o logout local
+    if (refreshToken) api.post('/auth/logout', { refreshToken }).catch(() => {})
+    supabase.auth.signOut().catch(() => {})
+    setTimeout(() => setTransitioning(false), 400)
+  }
+
+  async function socialSignIn(supabaseToken: string) {
+    if (isSigningInRef.current) return
+    isSigningInRef.current = true
+    try {
+      // Verifica primeiro — evita sobrepor transitioning se já estiver logado
+      const savedToken = await getSecure('token')
+      if (savedToken) return
+      setTransitioning(true)
+      const res = await api.post<{ accessToken: string; refreshToken: string; user: User }>(
+        '/auth/social', { supabaseToken }
+      )
+      await signIn(res.accessToken, res.user, res.refreshToken)
+      setTimeout(() => setTransitioning(false), 400)
+    } catch (err) {
+      setTransitioning(false)
+      throw err
+    } finally {
+      isSigningInRef.current = false
+    }
   }
 
   function updateUser(updatedUser: User) {
@@ -76,7 +110,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       ])
       if (savedToken && savedUser) {
         try {
-          setAuth({ token: savedToken, user: JSON.parse(savedUser) })
+          const parsed = JSON.parse(savedUser)
+          if (isValidUser(parsed)) {
+            if (__DEV__) console.log('[Auth] hydrate — role:', parsed.role)
+            setAuth({ token: savedToken, user: parsed })
+          } else {
+            if (__DEV__) console.warn('[Auth] hydrate — user inválido, fazendo logout')
+            await signOut()
+          }
         } catch {
           await signOut()
         }
@@ -86,30 +127,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     carregarSessao()
   }, [])
 
-  // Ouve login social via OAuth redirect (web)
+  // Fallback: captura logins sociais que não passaram por handleGoogle (ex: deep link direto)
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_IN' && session) {
-        if (isSigningInRef.current) return
-        const savedToken = await getSecure('token')
-        if (savedToken) return
-
-        try {
-          const res = await api.post<{ accessToken: string; refreshToken: string; user: User }>(
-            '/auth/social',
-            { supabaseToken: session.access_token }
-          )
-          await signIn(res.accessToken, res.user, res.refreshToken)
-        } catch {
-          // Falha silenciosa — usuário pode tentar fazer login manualmente
-        }
+        try { await socialSignIn(session.access_token) } catch {}
       }
     })
     return () => subscription.unsubscribe()
   }, [])
 
   return (
-    <AuthContext.Provider value={{ token: auth.token, user: auth.user, loading, signIn, signOut, updateUser }}>
+    <AuthContext.Provider value={{ token: auth.token, user: auth.user, loading, transitioning, signIn, signOut, updateUser, socialSignIn }}>
       {children}
     </AuthContext.Provider>
   )

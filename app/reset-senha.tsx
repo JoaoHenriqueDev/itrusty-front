@@ -34,7 +34,7 @@ export default function ResetSenha() {
   const [loading, setLoading]           = useState(false)
   const [sucesso, setSucesso]           = useState(false)
 
-  const senhaValida = password.length >= 8
+  const senhaValida = password.length >= 8 && /[A-Za-z]/.test(password) && /\d/.test(password)
   const confirmOk   = password === confirmPassword
   const podeEnviar  = token && senhaValida && confirmOk && !loading
 
@@ -116,7 +116,7 @@ export default function ResetSenha() {
         </View>
 
         {password.length > 0 && !senhaValida && (
-          <Text style={s.hint}>A senha deve ter pelo menos 8 caracteres</Text>
+          <Text style={s.hint}>Mínimo 8 caracteres com ao menos 1 letra e 1 número</Text>
         )}
 
         <View style={s.inputWrapper}>

@@ -7,6 +7,7 @@ import { useAuth } from '../../contexts/AuthContext'
 import { api } from '../../services/api'
 import { useNotificacoes } from '../../hooks/useNotificacoes'
 import { Colors, Spacing, Typography, Radii, Shadows } from '../../constants/theme'
+import { useAppAlert } from '../../components/ui/AppAlert'
 
 type MotoristaData = {
   veiculos: { id: string; marca: string; modelo: string; ano: number; placa: string }[]
@@ -51,6 +52,7 @@ export default function PerfilMotorista() {
   const router  = useRouter()
   const insets  = useSafeAreaInsets()
   const { naoLidas } = useNotificacoes()
+  const { confirm } = useAppAlert()
   const [veiculos, setVeiculos] = useState<MotoristaData['veiculos']>([])
   const [fotoUrl,  setFotoUrl]  = useState<string | null>(null)
 
@@ -134,25 +136,25 @@ export default function PerfilMotorista() {
           <MenuItem
             icone="help-circle-outline"
             label="Central de ajuda"
-            onPress={() => router.push('/(oficina)/ajuda' as any)}
+            onPress={() => router.push('/(motorista)/ajuda')}
           />
           <Divider />
           <MenuItem
             icone="information-circle-outline"
             label="Sobre o iTrusty"
-            onPress={() => router.push('/(oficina)/sobre' as any)}
+            onPress={() => router.push('/(motorista)/sobre')}
           />
           <Divider />
           <MenuItem
             icone="document-text-outline"
             label="Termos de uso"
-            onPress={() => router.push('/(oficina)/termos' as any)}
+            onPress={() => router.push('/(motorista)/termos')}
           />
           <Divider />
           <MenuItem
             icone="shield-checkmark-outline"
             label="Política de privacidade"
-            onPress={() => router.push('/(oficina)/privacidade' as any)}
+            onPress={() => router.push('/(motorista)/privacidade')}
           />
         </View>
 
@@ -162,7 +164,12 @@ export default function PerfilMotorista() {
           <MenuItem
             icone="log-out-outline"
             label="Sair"
-            onPress={signOut}
+            onPress={() => confirm(
+              'Sair da conta?',
+              'Você precisará fazer login novamente para acessar o app.',
+              signOut,
+              { confirmText: 'Sair', destructive: true }
+            )}
             cor={Colors.error}
           />
         </View>

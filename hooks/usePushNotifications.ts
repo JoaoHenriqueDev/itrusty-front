@@ -46,7 +46,7 @@ async function registrarToken() {
     await api.patch('/usuario/push-token', { token: novoToken })
     await saveSecure('pushToken', novoToken)
   } catch (err) {
-    console.error('[Push] Erro ao registrar token:', err)
+    if (__DEV__) console.error('[Push] Erro ao registrar token:', err instanceof Error ? err.message : String(err))
   }
 }
 

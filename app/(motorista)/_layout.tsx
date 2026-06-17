@@ -1,6 +1,8 @@
-import { Tabs } from 'expo-router'
+import { Tabs, useRouter } from 'expo-router'
+import { useEffect } from 'react'
 import { Ionicons } from '@expo/vector-icons'
 import { Colors, Typography } from '../../constants/theme'
+import { useAuth } from '../../contexts/AuthContext'
 
 type IconName = keyof typeof Ionicons.glyphMap
 
@@ -11,6 +13,16 @@ const TABS: { name: string; title: string; icon: IconName; iconActive: IconName 
 ]
 
 export default function MotoristaLayout() {
+  const { user, loading } = useAuth()
+  const router = useRouter()
+
+  useEffect(() => {
+    if (loading) return
+    if (!user || user.role !== 'MOTORISTA') {
+      router.replace(user?.role === 'OFICINA' ? '/(oficina)/' : '/(auth)/login')
+    }
+  }, [user, loading])
+
   return (
     <Tabs
       screenOptions={{
@@ -61,6 +73,10 @@ export default function MotoristaLayout() {
       <Tabs.Screen name="notificacoes"    options={{ href: null, tabBarStyle: { display: 'none' } }} />
       <Tabs.Screen name="editar-perfil"   options={{ href: null, tabBarStyle: { display: 'none' } }} />
       <Tabs.Screen name="meus-veiculos"   options={{ href: null, tabBarStyle: { display: 'none' } }} />
+      <Tabs.Screen name="sobre"           options={{ href: null, tabBarStyle: { display: 'none' } }} />
+      <Tabs.Screen name="ajuda"           options={{ href: null, tabBarStyle: { display: 'none' } }} />
+      <Tabs.Screen name="termos"          options={{ href: null, tabBarStyle: { display: 'none' } }} />
+      <Tabs.Screen name="privacidade"     options={{ href: null, tabBarStyle: { display: 'none' } }} />
     </Tabs>
   )
 }

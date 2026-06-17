@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
-import AsyncStorage from '@react-native-async-storage/async-storage'
+import * as SecureStore from 'expo-secure-store'
 import { Platform } from 'react-native'
 
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL!
@@ -9,11 +9,19 @@ if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error('EXPO_PUBLIC_SUPABASE_URL e EXPO_PUBLIC_SUPABASE_ANON_KEY são obrigatórios')
 }
 
+// Usa Keychain (iOS) / Keystore (Android) — criptografado pelo SO.
+// Consistente com o armazenamento dos tokens da API em utils/storage.ts.
+const SecureStoreAdapter = {
+  getItem:    (key: string) => SecureStore.getItemAsync(key),
+  setItem:    (key: string, value: string) => SecureStore.setItemAsync(key, value),
+  removeItem: (key: string) => SecureStore.deleteItemAsync(key),
+}
+
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
-    ...(Platform.OS !== 'web' ? { storage: AsyncStorage } : {}),
-    autoRefreshToken:    true,
-    persistSession:      true,
-    detectSessionInUrl:  Platform.OS === 'web',
+    storage:            Platform.OS !== 'web' ? SecureStoreAdapter : undefined,
+    autoRefreshToken:   true,
+    persistSession:     true,
+    detectSessionInUrl: Platform.OS === 'web',
   }
 })

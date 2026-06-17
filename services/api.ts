@@ -13,7 +13,7 @@ async function fetchWithTimeout(url: string, options: RequestInit): Promise<Resp
   const timeoutId  = setTimeout(() => controller.abort(), TIMEOUT_MS)
   try {
     return await fetch(url, { ...options, signal: controller.signal })
-  } catch (err) {
+  } catch (err: any) {
     if (controller.signal.aborted) throw new Error('Servidor não respondeu. Verifique sua conexão.')
     throw err
   } finally {
@@ -81,12 +81,15 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
       },
     })
     const retryData = await retry.json()
-    if (!retry.ok) throw new Error(retryData.error ?? 'Erro desconhecido')
+    if (!retry.ok) throw new Error(retryData.error ?? 'Ocorreu um erro inesperado. Tente novamente.')
     return retryData as T
   }
 
   const data = res.status === 204 ? null : await res.json()
-  if (!res.ok) throw new Error(data?.error ?? 'Erro desconhecido')
+  if (!res.ok) {
+    if (res.status === 429) throw new Error('Muitas tentativas. Aguarde alguns instantes e tente novamente.')
+    throw new Error(data?.error ?? data?.message ?? 'Ocorreu um erro inesperado. Tente novamente.')
+  }
   return data as T
 }
 

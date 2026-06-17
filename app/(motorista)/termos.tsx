@@ -79,7 +79,7 @@ const SECOES: Secao[] = [
   },
 ]
 
-export default function TermosOficina() {
+export default function TermosMotorista() {
   const insets = useSafeAreaInsets()
   const router = useRouter()
 

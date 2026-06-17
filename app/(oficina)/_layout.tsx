@@ -1,6 +1,8 @@
-import { Tabs } from 'expo-router'
+import { Tabs, useRouter } from 'expo-router'
+import { useEffect } from 'react'
 import { Ionicons } from '@expo/vector-icons'
 import { Colors, Typography } from '../../constants/theme'
+import { useAuth } from '../../contexts/AuthContext'
 
 type IconName = keyof typeof Ionicons.glyphMap
 
@@ -12,6 +14,16 @@ const TABS: { name: string; title: string; icon: IconName; iconActive: IconName 
 ]
 
 export default function OficinaLayout() {
+  const { user, loading } = useAuth()
+  const router = useRouter()
+
+  useEffect(() => {
+    if (loading) return
+    if (!user || user.role !== 'OFICINA') {
+      router.replace(user?.role === 'MOTORISTA' ? '/(motorista)/' : '/(auth)/login')
+    }
+  }, [user, loading])
+
   return (
     <Tabs
       screenOptions={{

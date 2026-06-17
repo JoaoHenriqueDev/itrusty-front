@@ -52,12 +52,17 @@ export default function OnboardingMotorista() {
       setErro('Preencha todos os campos obrigatórios')
       return
     }
+    const anoNum = Number(ano)
+    if (isNaN(anoNum) || anoNum < 1950 || anoNum > 2030) {
+      setErro('Ano do veículo inválido (1950–2030)')
+      return
+    }
     setErro('')
     setLoading(true)
     try {
       const res = await api.post<{ accessToken: string; refreshToken: string }>('/motorista/onboarding', {
         cep: cep.replace(/\D/g, ''), rua, numero, bairro, cidade, estado,
-        veiculo: { marca, modelo, ano: Number(ano), placa: placa.replace('-', '') },
+        veiculo: { marca, modelo, ano: anoNum, placa: placa.replace('-', '') },
       })
       await signIn(res.accessToken, { ...user!, role: 'MOTORISTA' }, res.refreshToken)
     } catch (err: any) {
@@ -133,11 +138,24 @@ export default function OnboardingMotorista() {
           </View>
         </View>
 
-        <Input
-          placeholder="Bairro - Cidade"
-          value={bairro && cidade ? `${bairro} - ${cidade}` : ''}
-          editable={false}
-        />
+        <View style={s.row}>
+          <View style={{ flex: 1 }}>
+            <Input
+              placeholder="Bairro"
+              value={bairro}
+              onChangeText={setBairro}
+              returnKeyType="next"
+            />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Input
+              placeholder="Cidade"
+              value={cidade}
+              onChangeText={setCidade}
+              returnKeyType="next"
+            />
+          </View>
+        </View>
 
         {/* Veículo */}
         <View style={s.secaoHeader}>

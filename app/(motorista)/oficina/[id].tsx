@@ -72,8 +72,12 @@ export default function DetalheOficina() {
     if (url) Linking.openURL(url)
   }
 
+  const TELEFONE_VALIDO = /^\+?[\d\s\-()·.]{6,20}$/
+
   function ligar() {
-    if (oficina?.telefone) Linking.openURL(`tel:${oficina.telefone}`)
+    if (oficina?.telefone && TELEFONE_VALIDO.test(oficina.telefone)) {
+      Linking.openURL(`tel:${oficina.telefone.replace(/[^\d+]/g, '')}`)
+    }
   }
 
   if (loading) {
